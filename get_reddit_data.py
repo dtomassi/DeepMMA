@@ -1,9 +1,8 @@
 import argparse
+import json
 import praw
 
-from credentials import CLIENT_ID
-from credentials import CLIENT_SECRET
-from credentials import USER_AGENT
+from credentials import CLIENT_ID, CLIENT_SECRET, USER_AGENT
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -25,7 +24,8 @@ reddit = praw.Reddit(
     client_id=CLIENT_ID, client_secret=CLIENT_SECRET, user_agent=USER_AGENT
 )
 
-comments_list = []
+count = 0
+comments_dict = {}
 for submission in reddit.subreddit("mma").hot(limit=num_posts):
     # Ignore official posts as they are less "memey"
     if "[Official]" in submission.title:
@@ -33,8 +33,8 @@ for submission in reddit.subreddit("mma").hot(limit=num_posts):
     for comment in submission.comments:
         if comment is None or not hasattr(comment, "body"):
             continue
-        comments_list.append(comment.body)
+        comments_dict[count] = comment.body.strip()
+        count += 1
 
 with open(filename, "w+") as reddit_file:
-    for comment in comments_list:
-        reddit_file.write("{}\n".format(comment))
+    json.dump(comments_dict, reddit_file, indent=4)
